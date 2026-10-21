@@ -10,7 +10,7 @@ frontend/dist/
 frontend/build/
 backend/dist/
 
-# Environment files
+# Environment files — copy .env.example to .env and fill in values
 .env
 .env.local
 .env.*.local
@@ -46,6 +46,11 @@ venv/
 .venv/
 env/
 *.egg
+
+# SQLite databases — never commit DB files (data lives in /tmp on Vercel)
+*.db
+*.sqlite
+*.sqlite3
 
 # Coverage
 coverage/

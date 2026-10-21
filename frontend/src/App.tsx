@@ -4,7 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Area
 
 type EVRow = { id: string; trust: string; delivered_kwh: number; min_kwh: number; target_kwh: number; wait_h: number; status: string; initial_kw: number; initial_score: number | null; initial_rank: number | null; completion_h: number | null; explanation: string; min_met: boolean };
 type Result = { algorithm: string; metrics: Record<string, number>; evs: EVRow[]; timeline: { t: number; station_kw: number; used_kw: number }[]; events: { t: number; event: string; detail: string }[]; safety_rejections: { t: number; violations: string[] }[] };
-const api = async (p: string, o?: RequestInit) => { const r = await fetch("/api" + p, { headers: { "Content-Type": "application/json" }, ...o }); const j = await r.json().catch(() => ({})); if (!r.ok) throw j.detail ?? { errors: ["Server error " + r.status] }; return j; };
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const api = async (p: string, o?: RequestInit) => { const r = await fetch(API_BASE + "/api" + p, { headers: { "Content-Type": "application/json" }, ...o }); const j = await r.json().catch(() => ({})); if (!r.ok) throw j.detail ?? { errors: ["Server error " + r.status] }; return j; };
 const NAV = [["Dashboard", LayoutDashboard], ["EV Requests", Inbox], ["Live Scheduler", ListOrdered], ["Simulation Lab", FlaskConical], ["Analytics", BarChart3], ["Decision Details", FileSearch]] as const;
 const COL: Record<string, string> = { verified: "bg-emerald-100 text-emerald-700", estimated: "bg-amber-100 text-amber-700", claimed: "bg-slate-200 text-slate-700" };
 const Stat = ({ l, v, s }: { l: string; v: string | number; s?: string }) => <div className="card fade"><p className="text-xs font-medium uppercase tracking-wider text-slate-500">{l}</p><p className="mt-2 text-3xl font-semibold tracking-tight">{v}</p>{s && <p className="mt-1 text-xs text-slate-400">{s}</p>}</div>;
