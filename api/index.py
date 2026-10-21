@@ -3,35 +3,41 @@
 - CORS origins set via ALLOWED_ORIGINS env var (comma-separated) for production.
 - No secrets, no external calls. All data is simulated/illustrative.
 """
+import sys
+import os
+
+# ── CRITICAL: add api/ directory to Python path so 'scheduler' can be imported ──
+# Vercel runs functions from the project root, not from api/, so we must
+# explicitly add the directory containing this file to sys.path.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import json
 import sqlite3
-import os
 from dataclasses import asdict
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
-# scheduler.py lives in the same api/ directory
 from scheduler import EV, DEFAULT_CFG, SEEDS, validate, simulate, compare
 
 # ─── Storage ──────────────────────────────────────────────────────────────────
-# /tmp is writable on Vercel serverless; falls back to DB_PATH env var for local dev
+# /tmp is the only writable path on Vercel serverless
 DB = os.environ.get("DB_PATH", "/tmp/ev_charging.db")
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 # Set ALLOWED_ORIGINS="https://your-app.vercel.app" in Vercel project settings
-_origins_env = os.environ.get(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://localhost:4173"
-)
-ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()]
+# Leave unset to allow all origins (safe for a demo with no auth)
+_origins_env = os.environ.get("ALLOWED_ORIGINS", "*")
+if _origins_env.strip() == "*":
+    ALLOWED_ORIGINS = ["*"]
+else:
+    ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()]
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 app = FastAPI(title="EV Charging Queue & Power Allocation Manager")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=ALLOWED_ORIGINS != ["*"],   # credentials not allowed with wildcard
     allow_methods=["*"],
     allow_headers=["*"],
 )
